@@ -14,24 +14,41 @@ const int HASH_LEN = 33;        // Length of MD5 hash strings
 char * tryWord(char * plaintext, char * hashFilename)
 {
     // Hash the plaintext
+    char *hash = md5(plaintext, strlen(plaintext));
 
     // Open the hash file
+    FILE *hashes = fopen(hashFilename, "r");
 
+    //Check for errors
+    if (!hashes) {
+        printf("Error opening file");
+        free(hash);
+        exit(1);
+    }
+
+    char line[255];
     // Loop through the hash file, one line at a time.
-
-    // Attempt to match the hash from the file to the
-    // hash of the plaintext.
-
-    // If there is a match, you'll return the hash.
-    // If not, return NULL.
+    while (fgets(line, 255, hashes) != NULL) {
+        line[strcspn(line, "\n")] = 0;
+        //printf("Line: %s\n", line);
+        //printf("Hash: %s\n", hash);
+        if (strcmp(line, hash) == 0) {
+            //printf("Found it\n");
+            fclose(hashes);
+            free(hash);
+            return strdup(line);
+        }
+    }
 
     // Before returning, do any needed cleanup:
     //   Close files?
+    fclose(hashes);
     //   Free memory?
+    free(hash);
 
-    // Modify this line so it returns the hash
-    // that was found, or NULL if not found.
-    return "0123456789abcdef0123456789abcdef";
+    // If there is a match, you'll return the hash.
+    // If not, return NULL.
+    return NULL;
 }
 
 
@@ -53,18 +70,28 @@ int main(int argc, char *argv[])
 
 
     // Open the dictionary file for reading.
-    
+    FILE *dict = fopen(argv[2], "r");
 
     // For each dictionary word, pass it to tryWord, which
     // will attempt to match it against the hashes in the hash_file.
-    
-    // If we got a match, display the hash and the word. For example:
-    //   5d41402abc4b2a76b9719d911017c592 hello
+    int count = 0;
+    char line[255];
+    char *result;
+    while (fgets(line, 255, dict) != NULL) {
+        line[strcspn(line, "\n")] = 0;
+        result = tryWord(line, argv[1]);
+        if (result != NULL) {
+            count++;
+            printf("%s %s\n", result, line);
+        }
+    }
     
     // Close the dictionary file.
+    fclose(dict);
 
     // Display the number of hashes that were cracked.
+    printf("Found %d many matches\n", count);
     
     // Free up any malloc'd memory?
+    free(result);
 }
-
